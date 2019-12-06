@@ -2,38 +2,24 @@
 #include<vector>
 using namespace std;
 
-struct node;
-struct edge;
-
-struct edge{
-  node *targetNode;
-  string label;
-};
-
 struct node{
-  vector<edge*> edges;
+  vector<node*> link;
   bool isLeaf;
+  string value;
 };
 
-struct auxillaryDataStore{
-  node *targetNode;
-  string data;
-};
-
-node* createNewNode(){
-  node* newNode = new node;
-  newNode->isLeaf=false;
+node* createNode(string val){
+  node *newNode=new node;
+  newNode->isLeaf=true;
+  newNode->value=val;
   return newNode;
 }
 
-edge* createNewEdge(){
-  edge* newEdge = new edge;
-  newEdge->label="";
-  newEdge->targetNode=NULL;
-  return newEdge;
+bool sharePrefix(string a, string b){
+  return a[0]==b[0]?true:false;
 }
 
-string getCommonPrefixSubstr(string curr, string input){
+string getPrefix(string curr, string input){
   int i=0;
   while(curr[i]==input[i]){
     i+=1;
@@ -41,154 +27,139 @@ string getCommonPrefixSubstr(string curr, string input){
   return input.substr(0, i);
 }
 
-int getCommonPrefixIndex(string curr, string input){
+string pruneAndRemovePrefix(string curr, string input){
   int i=0;
-  while(curr[i]==input[i] && curr[i]!='\0' && input[i]!='\0'){
+  int n=input.size();
+  while(curr[i]==input[i]&&(curr[i]!='\0')&&(input[i]!='\0')){
     i+=1;
   }
-  return i;
+  return input.substr(i, n-i);
 }
 
-bool hasCommonPrefix(string curr, string input){
-  return curr[0]==input[0]?true:false;
-}
-
-// COMPLETE
-// THIS WILL DISPLAY ALL THE CURRENT NODES OF THE TRIE
-void display(node *root){
+void insert(node *root, string val){
   node *traverseNode=root;
-  while(traverseNode!=NULL){
-    node *child=traverseNode;
-    for(int i=0;i<child->edges.size();i++){}
-  }
-}
-
-// ISSUE WAS THAT WE WERE SEARCHING WITH THE SAME EDGE INDEX i. THAT IS EVEN WHEN WE WENT TO THE SECOND NODE,
-// WE WERE SEARCHING FOR DATA FROM THE SAME NODE.
-
-bool search(node *root, string data, int elementsFound, int dataLength){
-  node *traverseNode=root;
-  int size=data.size();
-
-  if(traverseNode==NULL){
-    return false;
-  }
-  if(elementsFound==dataLength){
-    return true;
-  }
-  if(data.size()<=0){
-    return true;
-  }
-
-  bool prefixExists=false;
-  int i;
-  //indicates if the prefix string exists in the data structure.
-  // at the root of the structure. check if there exists a common prefix with all the edges
-
-  for(i=0;i<traverseNode->edges.size(); i++){
-    if(hasCommonPrefix(traverseNode->edges[i]->label, data)){
-      prefixExists=true;
-      break;
-    }
-  }
-
-  if(prefixExists){
-    // There exists index i with common prefix with data
-    string commonString = getCommonPrefixSubstr(traverseNode->edges[i]->label, data);
-    int prefixIndex = getCommonPrefixIndex(traverseNode->edges[i]->label, data);
-    data = data.substr(prefixIndex, size-prefixIndex+1);
-    return search(traverseNode->edges[i]->targetNode, data, elementsFound, dataLength);
-  }
-  else{
-    // Current edges and the search string do not share a common prefix.
-    return false;
-  }
-}
-
-// REACHES THE REQUIRED POSITION
-auxillaryDataStore* reachNode(node *root, string data){
-  node *traverseNode=root;
-  int i;
-  bool hasPrefix=false;
-  for(i=0;i<traverseNode->edges.size(); i++){
-    if(hasCommonPrefix(traverseNode->edges[i]->label, data)){
-      hasPrefix=true;
-      break;
-    }
-  }
-  if(hasPrefix){
-    if(traverseNode->edges[i]->label.size()>=data.size()){
-      string intermediateString = traverseNode->edges[i]->label;
-      string prefixString = getCommonPrefixSubstr(data, traverseNode->edges[i]->label);
-      int prefixIndex = getCommonPrefixIndex(intermediateString, data);
-      intermediateString = intermediateString.substr(prefixIndex, intermediateString.size()-prefixIndex+1);
-      traverseNode->edges[i]->label=data;
-      data=intermediateString;
-      traverseNode=traverseNode->edges[i]->targetNode;
-      auxillaryDataStore *ads = new auxillaryDataStore;
-      ads->targetNode=traverseNode;
-      ads->data=data;
-      return ads;
-    }
-    else{
-      string commonString = getCommonPrefixSubstr(traverseNode->edges[i]->label, data);
-      int prefixIndex = getCommonPrefixIndex(traverseNode->edges[i]->label, data);
-      data = data.substr(prefixIndex, data.size()-prefixIndex+1);
-      return reachNode(traverseNode->edges[i]->targetNode, data);
-    }
-  }
-  else{
-    auxillaryDataStore *ads = new auxillaryDataStore;
-    ads->targetNode=traverseNode;
-    ads->data=data;
-    return ads;
-  }
-}
-
-/* Insert has 3 cases:
-  1. New Node : An entirely new string is added. Hence simply add this element to the root.
-  2. String B is added such that it is a suffix of another string A. -> Simply add a new node to the leaf node denoting A,
-  with the suffix denoting the value of the edge. Another null edge has to be added to denote string A.
-  3. String B is added such that it shares only a few characters with an existing string A. In this case, identify
-  the common suffix C of A and B, make C a node with it's parent as the parent of A and make A and B it's Children.
-*/
-void insert(node *root, string data){
-  node *traverseNode=root;
-  auxillaryDataStore *ads = new auxillaryDataStore;
-  ads=reachNode(traverseNode, data);
-  traverseNode=ads->targetNode;
-  data=ads->data;
-  // simple insert to the root
-  edge* newEdge = createNewEdge();
-  node* newNode = createNewNode();
-  newNode->isLeaf=true;
+  node *childNode=root;  //Auxillary Value
   if(traverseNode->isLeaf){
+    cout<<"Inserting value: "<<val<<"\n";
+    node *newNode=createNode(val);
+    traverseNode->link.push_back(newNode);
     traverseNode->isLeaf=false;
   }
+  else{
+    // Amongst all neighbours of root, find if there exists a shared prefix, and recurse to that node
+    // iterate through vector list
+    bool prefixExists=false;
+    string new_val=val;
+    string prefix=val;
+    for(node *child:traverseNode->link){
+      if(sharePrefix(child->value, val)){
+        //get prefix, generate new string to be inserted, recurse to the child node
+        prefixExists=true;
+        childNode=child;
+        prefix=getPrefix(child->value, val);
+        cout<<"Common Prefix was: "<<prefix<<"\n";
+        new_val=pruneAndRemovePrefix(child->value, val);
+        break;
+      }
+    }
+    if(!prefixExists){
+      cout<<"Prefix does not exist. Inserting value: "<<val<<"\n";
+      node *newNode=createNode(val);
+      traverseNode->link.push_back(newNode);
+    }
+    else{
+      // split the current word and create a separate node as well
+      // check if child is leaf. If it is leaf, split it
+      // if(childNode->isLeaf){
+        // prune and remove whatever does not match from temp_child_value;
+        string temp_child_value = childNode->value;
+        string prunedString=pruneAndRemovePrefix(val, temp_child_value);
+        if(prefix!=childNode->value){
+          childNode->value=prefix;
+          cout<<"Inserting value here: "<<childNode->value<<" : "<<prunedString<<"\n";
+          node *newNode=createNode(prunedString);
+          childNode->link.push_back(newNode);
+        }
+      // }
+      // cout<<"Inserting here as well: "<<childNode->value<<" : "<<new_val<<"\n";
+      insert(childNode, new_val);
+    }
+  }
+}
 
-  newEdge->targetNode=newNode;
-  newEdge->label=data;
-  // Add newEdge to the list of edges of traverseNode
-  // @TODO: Inserting to the beginning. Performance can be compared!
-  traverseNode->edges.push_back(newEdge);
+bool search(node *root, string val, string found, string originalString){
+  node *traverseNode=root;
+  node *childNode=root;
+  found+=traverseNode->value;
+  cout<<"Found is "<<found<<"\n";
+  if((traverseNode->link.empty())&&(originalString!=found)){
+    return false;
+  }
+  else if((traverseNode->link.empty()) && (originalString==found)){
+    cout<<"Returning true in the first if block\n";
+    return true;
+  }
+  else{
+    // Check if there is a prefix between our val and child nodes
+    cout<<"Moving to Else part. Found till now is : "<<found<<"\n";
+    string new_val;
+    string inter_found=found;
+    bool prefixExists=false;
+    for(node *child:traverseNode->link){
+      if(sharePrefix(child->value, val)){
+        prefixExists=true;
+        childNode=child;
+        new_val=pruneAndRemovePrefix(child->value, val);
+        inter_found+=child->value;
+        break;
+      }
+    }
+    cout<<"Value found till now is : "<<inter_found<<"\n";
+    cout<<"New Value is : "<<new_val<<" Printed:\n";
+    if(!prefixExists){
+      return false;
+    }
+    else if((new_val=="")&&(inter_found==originalString)){
+      cout<<"OG string is : "<<originalString<<" Our string found is : "<<inter_found<<"\n";
+      return true;
+    }
+    else{
+      return search(childNode, new_val, found, originalString);
+    }
+  }
+}
+
+void display(node *root, string prefix){
+  string new_prefix=prefix+root->value;
+  cout<<new_prefix<<"\n";
+  if(!root->isLeaf){
+    for(node *child: root->link){
+      display(child, new_prefix);
+    }
+  }
 }
 
 int main(){
   int n, q;
   string data, search_term;
-  node *root = createNewNode();
-  edge *branch = createNewEdge();
+  node *root = createNode("");
+  root->isLeaf=true;
   cout<<"Enter the number of elements to be inserted\n";
   cin>>n;
   for(int i=0;i<n;i++){
     cin>>data;
-    insert(root, data);
+    node *auxRoot=root;
+    insert(auxRoot, data);
   }
-  cout<<"\nEnter the number of queries\n";
+
+  node *auxRoot=root;
+  display(auxRoot, "");
+
+  cout<<"\n\nEnter the number of queries\n";
   cin>>q;
   while(q--){
     cin>>search_term;
-    cout<<search(root, search_term, 0, search_term.size())<<"\n";
+    cout<<search(root, search_term, "", search_term)<<"\n";
   }
   return 0;
 }
