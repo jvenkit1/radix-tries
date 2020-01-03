@@ -40,7 +40,6 @@ void insert(node *root, string val){
   node *traverseNode=root;
   node *childNode=root;  //Auxillary Value
   if(traverseNode->isLeaf){
-    cout<<"Inserting value: "<<val<<"\n";
     node *newNode=createNode(val);
     traverseNode->link.push_back(newNode);
     traverseNode->isLeaf=false;
@@ -57,32 +56,49 @@ void insert(node *root, string val){
         prefixExists=true;
         childNode=child;
         prefix=getPrefix(child->value, val);
-        cout<<"Common Prefix was: "<<prefix<<"\n";
         new_val=pruneAndRemovePrefix(child->value, val);
         break;
       }
     }
     if(!prefixExists){
-      cout<<"Prefix does not exist. Inserting value: "<<val<<"\n";
       node *newNode=createNode(val);
       traverseNode->link.push_back(newNode);
     }
     else{
       // split the current word and create a separate node as well
       // check if child is leaf. If it is leaf, split it
-      // if(childNode->isLeaf){
-        // prune and remove whatever does not match from temp_child_value;
-        string temp_child_value = childNode->value;
-        string prunedString=pruneAndRemovePrefix(val, temp_child_value);
-        if(prefix!=childNode->value){
-          childNode->value=prefix;
-          cout<<"Inserting value here: "<<childNode->value<<" : "<<prunedString<<"\n";
-          node *newNode=createNode(prunedString);
-          childNode->link.push_back(newNode);
+      // prune and remove whatever does not match from temp_child_value;
+      string temp_child_value = childNode->value;
+      string prunedString=pruneAndRemovePrefix(val, temp_child_value);
+
+      /* for cases where we have to break the current word into 2 node:
+         1 node signifying the already existing word and another
+         signifying the new word to be inserted
+      */
+      if(prefix!=temp_child_value){
+        childNode->value=prefix;
+        node *newNode=createNode(prunedString);
+
+        // Transferring all children of childNode to the newNode
+        // which will be child of the current node which is branched out
+        for(node* children: childNode->link){
+          newNode->link.push_back(children);
         }
-      // }
-      // cout<<"Inserting here as well: "<<childNode->value<<" : "<<new_val<<"\n";
-      insert(childNode, new_val);
+        newNode->isLeaf=false;
+        childNode->link.clear();
+        childNode->link.push_back(newNode);
+
+        // insert data in childNode:
+        node* newChildNode=createNode(new_val);
+        childNode->link.push_back(newChildNode);
+        childNode->isLeaf=false;
+      }
+      else{
+        if(new_val==""){
+          cout<<"Value is already inserted\n";
+        }
+        insert(childNode, new_val);
+      }
     }
   }
 }
@@ -91,17 +107,14 @@ bool search(node *root, string val, string found, string originalString){
   node *traverseNode=root;
   node *childNode=root;
   found+=traverseNode->value;
-  cout<<"Found is "<<found<<"\n";
   if((traverseNode->link.empty())&&(originalString!=found)){
     return false;
   }
   else if((traverseNode->link.empty()) && (originalString==found)){
-    cout<<"Returning true in the first if block\n";
     return true;
   }
   else{
     // Check if there is a prefix between our val and child nodes
-    cout<<"Moving to Else part. Found till now is : "<<found<<"\n";
     string new_val;
     string inter_found=found;
     bool prefixExists=false;
@@ -114,13 +127,10 @@ bool search(node *root, string val, string found, string originalString){
         break;
       }
     }
-    cout<<"Value found till now is : "<<inter_found<<"\n";
-    cout<<"New Value is : "<<new_val<<" Printed:\n";
     if(!prefixExists){
       return false;
     }
     else if((new_val=="")&&(inter_found==originalString)){
-      cout<<"OG string is : "<<originalString<<" Our string found is : "<<inter_found<<"\n";
       return true;
     }
     else{
@@ -148,17 +158,21 @@ int main(){
   cin>>n;
   for(int i=0;i<n;i++){
     cin>>data;
+    data+=".";  // We suffix all strings with a '.'; This is a terminal character
     node *auxRoot=root;
     insert(auxRoot, data);
+    node *auxillaryRoot=root;
   }
 
   node *auxRoot=root;
+  cout<<"Displaying all nodes now !\n";
   display(auxRoot, "");
 
   cout<<"\n\nEnter the number of queries\n";
   cin>>q;
   while(q--){
     cin>>search_term;
+    search_term+=".";
     cout<<search(root, search_term, "", search_term)<<"\n";
   }
   return 0;
