@@ -2,5 +2,5 @@ Project Intuition:
 
 The project contains an implementation of the Radix Trie structure in C++ language.
 
-
-*Rigorous Testing Pending
+References:
+https://en.wikipedia.org/wiki/Radix_tree

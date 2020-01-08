@@ -1,5 +1,6 @@
 #include<iostream>
 #include<vector>
+#include<fstream>
 using namespace std;
 
 struct node{
@@ -154,14 +155,14 @@ int main(){
   string data, search_term;
   node *root = createNode("");
   root->isLeaf=true;
-  cout<<"Enter the number of elements to be inserted\n";
-  cin>>n;
-  for(int i=0;i<n;i++){
-    cin>>data;
-    data+=".";  // We suffix all strings with a '.'; This is a terminal character
-    node *auxRoot=root;
-    insert(auxRoot, data);
-    node *auxillaryRoot=root;
+  // READING DATA FROM A FILE
+  ifstream fstream("input.txt");
+  if(fstream.is_open()){
+    while(getline(fstream, data)){
+      data+=".";
+      node *auxRoot=root;
+      insert(auxRoot, data);
+    }
   }
 
   node *auxRoot=root;
